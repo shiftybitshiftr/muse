@@ -15,6 +15,7 @@ import {
   StreamType,
   VoiceConnection,
   VoiceConnectionStatus,
+  entersState,
 } from '@discordjs/voice';
 import FileCacheProvider from './file-cache.js';
 import debug from '../utils/debug.js';
@@ -98,6 +99,8 @@ export default class {
       guildId: channel.guild.id,
       adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
     });
+
+    await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);
 
     // Workaround to disable keepAlive
     this.voiceConnection.on('stateChange', (oldState, newState) => {
@@ -449,7 +452,10 @@ export default class {
 
     if (!ffmpegInput) {
       // Not yet cached, must download
-      const info = await ytdl.getInfo(song.url);
+      const youtubeUrl = ytdl.validateURL(song.url)
+        ? song.url
+        : `https://www.youtube.com/watch?v=${song.url}`;
+      const info = await ytdl.getInfo(youtubeUrl);
 
       const formats = info.formats as YTDLVideoFormat[];
 
